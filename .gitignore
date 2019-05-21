@@ -1,0 +1,6 @@
+
+gym_maze/.DS_Store
+*.pyc
+gym_maze/envs/.DS_Store
+.DS_Store
+*.json

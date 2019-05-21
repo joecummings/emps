@@ -7,12 +7,15 @@ import gym
 import gym_maze
 
 
+curr_state = np.asarray([0.5, 0.5, 0.5, 0.5, 0.5])  #[happy, sad, bored, frustrated, curious]
+mood = [] 
+
 def simulate():
 
     # Instantiating the learning related parameters
     learning_rate = get_learning_rate(0)
     explore_rate = get_explore_rate(0)
-    discount_factor = 0.99
+    discount_rate = get_discount_rate(0)
 
     num_streaks = 0
 
@@ -30,6 +33,12 @@ def simulate():
 
         for t in range(MAX_T):
 
+            # Update parameters
+            explore_rate = get_explore_rate(t)
+            learning_rate = get_learning_rate(t)
+            # discount_rate += get_discount_rate(t)
+
+
             # Select an action
             action = select_action(state_0, explore_rate)
 
@@ -42,7 +51,7 @@ def simulate():
 
             # Update the Q based on the result
             best_q = np.amax(q_table[state])
-            q_table[state_0 + (action,)] += learning_rate * (reward + discount_factor * (best_q) - q_table[state_0 + (action,)])
+            q_table[state_0 + (action,)] += learning_rate * (reward + discount_rate * (best_q) - q_table[state_0 + (action,)])
 
             # Setting up for the next iteration
             state_0 = state
@@ -58,6 +67,7 @@ def simulate():
                 print("Explore rate: %f" % explore_rate)
                 print("Learning rate: %f" % learning_rate)
                 print("Streaks: %d" % num_streaks)
+                print("Discount rate:", discount_rate)
                 print("")
 
             elif DEBUG_MODE == 1:
@@ -95,11 +105,6 @@ def simulate():
         if num_streaks > STREAK_TO_END:
             break
 
-        # Update parameters
-        explore_rate = get_explore_rate(episode)
-        learning_rate = get_learning_rate(episode)
-
-
 def select_action(state, explore_rate):
     # Select a random action
     if random.random() < explore_rate:
@@ -111,11 +116,23 @@ def select_action(state, explore_rate):
 
 
 def get_explore_rate(t):
+    const_emo_dr = [0.0, 0.0, 0.0, 0.0, 0.0]
+
     return max(MIN_EXPLORE_RATE, min(0.8, 1.0 - math.log10((t+1)/DECAY_FACTOR)))
 
 
 def get_learning_rate(t):
+    const_emo_dr = [0.0, 0.0, 0.0, 0.0, 0.0]
+
     return max(MIN_LEARNING_RATE, min(0.8, 1.0 - math.log10((t+1)/DECAY_FACTOR)))
+
+def get_discount_rate(t):
+    const_emo_dr = np.asarray([0.0, 0.0, 0.15, 0.15, -0.3])
+
+    if t == 0:
+        return 0.99
+    else:
+        return np.dot(const_emo_dr, curr_state)
 
 
 def state_to_bucket(state):
@@ -138,7 +155,7 @@ def state_to_bucket(state):
 if __name__ == "__main__":
 
     # Initialize the "maze" environment
-    env = gym.make("maze-random-10x10-plus-v0")
+    env = gym.make("maze-random-10x10-v0")
 
     '''
     Defining the environment related constants
@@ -166,7 +183,7 @@ if __name__ == "__main__":
     MAX_T = np.prod(MAZE_SIZE, dtype=int) * 100
     STREAK_TO_END = 100
     SOLVED_T = np.prod(MAZE_SIZE, dtype=int)
-    DEBUG_MODE = 0
+    DEBUG_MODE = 2
     RENDER_MAZE = True
     ENABLE_RECORDING = True
 
