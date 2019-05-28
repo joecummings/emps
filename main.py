@@ -8,7 +8,7 @@ import gym_maze
 
 
 curr_state = np.asarray([0.5, 0.5, 0.5, 0.5, 0.5])  #[happy, sad, bored, frustrated, curious]
-mood = [] 
+mood = []
 
 def simulate():
 
@@ -21,6 +21,8 @@ def simulate():
 
     # Render tha maze
     env.render()
+
+    prev_rewards = prev_rewards[:25]
 
     for episode in range(NUM_EPISODES):
 
@@ -38,16 +40,19 @@ def simulate():
             learning_rate = get_learning_rate(t)
             # discount_rate += get_discount_rate(t)
 
-
             # Select an action
             action = select_action(state_0, explore_rate)
-
+            
             # execute the action
-            obv, reward, done, _ = env.step(action)
+            obv, reward, done, info = env.step(action)
 
             # Observe the result
             state = state_to_bucket(obv)
             total_reward += reward
+            prev_rewards.insert(0, reward)
+
+            # update emotion state
+            update_emotion_state(t, state, prev_rewards, total_reward)
 
             # Update the Q based on the result
             best_q = np.amax(q_table[state])
@@ -63,11 +68,13 @@ def simulate():
                 print("Action: %d" % action)
                 print("State: %s" % str(state))
                 print("Reward: %f" % reward)
+                print("Total Reward: %f" % total_reward)
                 print("Best Q: %f" % best_q)
                 print("Explore rate: %f" % explore_rate)
                 print("Learning rate: %f" % learning_rate)
                 print("Streaks: %d" % num_streaks)
                 print("Discount rate:", discount_rate)
+                print("Q: ", q_table)
                 print("")
 
             elif DEBUG_MODE == 1:
@@ -114,17 +121,27 @@ def select_action(state, explore_rate):
         action = int(np.argmax(q_table[state]))
     return action
 
+def update_emotion_state(t, state, prev_rewards, total_reward):
+    if prev_rewards:
+        if t > 25:
+            curr_state[2] = min(curr_state[2] += 0.1, 1.0) # boredom
+        curr_state[4] = min(curr_state[4] += 0.1, 1.0) # curiousity
 
-def get_explore_rate(t):
-    const_emo_dr = [0.0, 0.0, 0.0, 0.0, 0.0]
+    if total_reward < -0.1:
+        if t > 25:
+            curr_state[3] = min(curr_state[3] += 0.1, 1.0) # frustration
 
-    return max(MIN_EXPLORE_RATE, min(0.8, 1.0 - math.log10((t+1)/DECAY_FACTOR)))
+
+def get_explore_rate(er):
+    const_emo_er = [-0.20, -0.10, 0.10, 0.10, 0.20]
+
+    return max(MIN_EXPLORE_RATE, min(0.8, 1.0 - np.dot(const_emo_er, curr_state)))
 
 
 def get_learning_rate(t):
-    const_emo_dr = [0.0, 0.0, 0.0, 0.0, 0.0]
+    const_emo_lr = [0.0, 0.0, 0.0, 0.0, 0.0]
 
-    return max(MIN_LEARNING_RATE, min(0.8, 1.0 - math.log10((t+1)/DECAY_FACTOR)))
+    return max(MIN_EXPLORE_RATE, min(0.8, 1.0 - np.dot(const_emo_lr, curr_state)))
 
 def get_discount_rate(t):
     const_emo_dr = np.asarray([0.0, 0.0, 0.15, 0.15, -0.3])
@@ -155,7 +172,7 @@ def state_to_bucket(state):
 if __name__ == "__main__":
 
     # Initialize the "maze" environment
-    env = gym.make("maze-random-10x10-v0")
+    env = gym.make("maze-sample-5x5-v0")
 
     '''
     Defining the environment related constants
