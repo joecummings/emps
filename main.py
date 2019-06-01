@@ -7,8 +7,9 @@ import gym
 import gym_maze
 
 
-curr_state = np.asarray([0.5, 0.5, 0.5, 0.5, 0.5])  #[happy, sad, bored, frustrated, curious]
-mood = [] 
+curr_state = np.asarray([0.5, 0.5, 0.5, 0.5, 0.5])  # [happy, sad, bored, frustrated, curious]
+mood = []
+
 
 def simulate():
 
@@ -37,7 +38,6 @@ def simulate():
             explore_rate = get_explore_rate(t)
             learning_rate = get_learning_rate(t)
             # discount_rate += get_discount_rate(t)
-
 
             # Select an action
             action = select_action(state_0, explore_rate)
@@ -105,6 +105,7 @@ def simulate():
         if num_streaks > STREAK_TO_END:
             break
 
+
 def select_action(state, explore_rate):
     # Select a random action
     if random.random() < explore_rate:
@@ -125,6 +126,7 @@ def get_learning_rate(t):
     const_emo_dr = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     return max(MIN_LEARNING_RATE, min(0.8, 1.0 - math.log10((t+1)/DECAY_FACTOR)))
+
 
 def get_discount_rate(t):
     const_emo_dr = np.asarray([0.0, 0.0, 0.15, 0.15, -0.3])
@@ -197,10 +199,10 @@ if __name__ == "__main__":
     '''
     recording_folder = "/tmp/maze_q_learning"
 
-    #if ENABLE_RECORDING:
+    # if ENABLE_RECORDING:
     #    env.monitor.start(recording_folder, force=True)
 
     simulate()
 
-    #if ENABLE_RECORDING:
+    # if ENABLE_RECORDING:
     #    env.monitor.close()

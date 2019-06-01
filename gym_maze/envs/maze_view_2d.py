@@ -125,12 +125,12 @@ class MazeView2D:
             self.__draw_entrance()
             self.__draw_goal()
             self.__draw_portals()
+            self.__draw_reward_tiles()
             self.__draw_robot()
-
 
             # update the screen
             self.screen.blit(self.background, (0, 0))
-            self.screen.blit(self.maze_layer,(0, 0))
+            self.screen.blit(self.maze_layer, (0, 0))
 
             if mode == "human":
                 pygame.display.flip()
@@ -138,10 +138,10 @@ class MazeView2D:
             return np.flipud(np.rot90(pygame.surfarray.array3d(pygame.display.get_surface())))
 
     def __draw_maze(self):
-        
+
         if self.__enable_render is False:
             return
-        
+
         line_colour = (0, 0, 0, 255)
 
         # drawing the horizontal lines
@@ -156,7 +156,7 @@ class MazeView2D:
 
         # breaking the walls
         for x in range(len(self.maze.maze_cells)):
-            for y in range (len(self.maze.maze_cells[x])):
+            for y in range(len(self.maze.maze_cells[x])):
                 # check the which walls are open in each cell
                 walls_status = self.maze.get_walls_status(self.maze.maze_cells[x, y])
                 dirs = ""
@@ -169,7 +169,7 @@ class MazeView2D:
 
         if self.__enable_render is False:
             return
-        
+
         dx = x * self.CELL_W
         dy = y * self.CELL_H
 
@@ -198,7 +198,7 @@ class MazeView2D:
 
         if self.__enable_render is False:
             return
-        
+
         x = int(self.__robot[0] * self.CELL_W + self.CELL_W * 0.5 + 0.5)
         y = int(self.__robot[1] * self.CELL_H + self.CELL_H * 0.5 + 0.5)
         r = int(min(self.CELL_W, self.CELL_H)/5 + 0.5)
@@ -217,14 +217,21 @@ class MazeView2D:
 
         if self.__enable_render is False:
             return
-        
+
         colour_range = np.linspace(0, 255, len(self.maze.portals), dtype=int)
         colour_i = 0
         for portal in self.maze.portals:
-            colour = ((100 - colour_range[colour_i])% 255, colour_range[colour_i], 0)
+            colour = ((100 - colour_range[colour_i]) % 255, colour_range[colour_i], 0)
             colour_i += 1
             for location in portal.locations:
                 self.__colour_cell(location, colour=colour, transparency=transparency)
+
+    def __draw_reward_tiles(self, color=(), transparency=235):
+
+        for reward_tile in self.maze.reward_tiles:
+            # You can't make me misspell color
+            color = (255 * (-1 * reward_tile.value) if reward_tile.value < 0 else 0, 255 * reward_tile.value if reward_tile.value > 0 else 0, 0)
+            self.__colour_cell(reward_tile.location, colour=color, transparency=transparency)
 
     def __colour_cell(self, cell, colour, transparency):
 
@@ -290,7 +297,7 @@ class Maze:
         "W": (-1, 0)
     }
 
-    def __init__(self, maze_cells=None, maze_size=(10,10), has_loops=True, num_portals=0):
+    def __init__(self, maze_cells=None, maze_size=(10, 10), has_loops=True, num_portals=0, num_reward_tiles=10):
 
         # maze member variables
         self.maze_cells = maze_cells
@@ -298,6 +305,8 @@ class Maze:
         self.__portals_dict = dict()
         self.__portals = []
         self.num_portals = num_portals
+        self.__reward_tiles = []
+        self.num_reward_tiles = num_reward_tiles
 
         # Use existing one if exists
         if self.maze_cells is not None:
@@ -363,7 +372,7 @@ class Maze:
                 if 0 <= x1 < self.MAZE_W and 0 <= y1 < self.MAZE_H:
                     # if all four walls still exist
                     if self.all_walls_intact(self.maze_cells[x1, y1]):
-                    #if self.num_walls_broken(self.maze_cells[x1, y1]) <= 1:
+                        # if self.num_walls_broken(self.maze_cells[x1, y1]) <= 1:
                         neighbours[dir_key] = (x1, y1)
 
             # if there is a neighbour
@@ -389,6 +398,9 @@ class Maze:
 
         if self.num_portals > 0:
             self.__set_random_portals(num_portal_sets=self.num_portals, set_size=2)
+
+        if self.num_reward_tiles > 0:
+            self.__set_random_reward_tiles(num_reward_tiles=self.num_reward_tiles)
 
     def __break_random_walls(self, percent):
         # find some random cells to break
@@ -430,7 +442,7 @@ class Maze:
                 # convert portal ids to location
                 x = portal_cell_id % self.MAZE_H
                 y = int(portal_cell_id / self.MAZE_H)
-                portal_locations.append((x,y))
+                portal_locations.append((x, y))
             # append the new portal to the maze
             portal = Portal(*portal_locations)
             self.__portals.append(portal)
@@ -438,6 +450,22 @@ class Maze:
             # create a dictionary of portals
             for portal_location in portal_locations:
                 self.__portals_dict[portal_location] = portal
+
+    def __set_random_reward_tiles(self, num_reward_tiles):
+        num_reward_tiles = int(num_reward_tiles)
+        max_reward_tiles = int(self.MAZE_W * self.MAZE_H)
+        num_reward_tiles = min(max_reward_tiles, num_reward_tiles)
+        cell_ids = random.sample(range(1, self.MAZE_W * self.MAZE_H - 1), num_reward_tiles)
+        for i in range(num_reward_tiles):
+            reward_tile_id = random.sample(cell_ids, 1)[0]
+            reward_tile_location = None
+            cell_ids.pop(cell_ids.index(reward_tile_id))
+            x = reward_tile_id % self.MAZE_H
+            y = int(reward_tile_id / self.MAZE_H)
+            reward_tile_location = (x, y)
+            # Create the new tile with a random reward value, and append to the maze
+            reward_tile = RewardTile(reward_tile_location, random.uniform(-1.0, 1.0))
+            self.__reward_tiles.append(reward_tile)
 
     def is_open(self, cell_id, dir):
         # check if it would be out-of-bound
@@ -476,6 +504,10 @@ class Maze:
         return None
 
     @property
+    def reward_tiles(self):
+        return tuple(self.__reward_tiles)
+
+    @property
     def MAZE_W(self):
         return int(self.maze_size[0])
 
@@ -486,10 +518,10 @@ class Maze:
     @classmethod
     def get_walls_status(cls, cell):
         walls = {
-            "N" : (cell & 0x1) >> 0,
-            "E" : (cell & 0x2) >> 1,
-            "S" : (cell & 0x4) >> 2,
-            "W" : (cell & 0x8) >> 3,
+            "N": (cell & 0x1) >> 0,
+            "E": (cell & 0x2) >> 1,
+            "S": (cell & 0x4) >> 2,
+            "W": (cell & 0x8) >> 3,
         }
         return walls
 
@@ -541,6 +573,7 @@ class Maze:
 
         return opposite_dirs
 
+
 class Portal:
 
     def __init__(self, *locations):
@@ -565,10 +598,23 @@ class Portal:
         return self.__locations
 
 
+class RewardTile:
+
+    def __init__(self, location, value):
+        self.__location = location
+        self.__value = value
+
+    @property
+    def location(self):
+        return self.__location
+
+    @property
+    def value(self):
+        return self.__value
+
+
 if __name__ == "__main__":
 
-    maze = MazeView2D(screen_size= (500, 500), maze_size=(10,10))
+    maze = MazeView2D(screen_size=(500, 500), maze_size=(10, 10))
     maze.update()
     input("Enter any key to quit.")
-
-
