@@ -21,20 +21,26 @@ class MazeEnv(gym.Env):
         if maze_file:
             self.maze_view = MazeView2D(maze_name="OpenAI Gym - Maze (%s)" % maze_file,
                                         maze_file_path=maze_file,
-                                        screen_size=(640, 640), 
+                                        screen_size=(640, 640),
                                         enable_render=enable_render)
         elif maze_size:
             if mode == "plus":
                 has_loops = True
                 num_portals = int(round(min(maze_size)/3))
+                num_reward_tiles = 0
+            elif mode == "reward":
+                has_loops = False
+                num_portals = 0
+                num_reward_tiles = 8
             else:
                 has_loops = False
                 num_portals = 0
+                num_reward_tiles = 0
 
             self.maze_view = MazeView2D(maze_name="OpenAI Gym - Maze (%d x %d)" % maze_size,
                                         maze_size=maze_size, screen_size=(640, 640),
                                         has_loops=has_loops, num_portals=num_portals,
-                                        enable_render=enable_render)
+                                        enable_render=enable_render, num_reward_tiles=num_reward_tiles)
         else:
             raise AttributeError("One must supply either a maze_file path (str) or the maze_size (tuple of length 2)")
 
@@ -82,6 +88,16 @@ class MazeEnv(gym.Env):
         else:
             reward = -0.1/(self.maze_size[0]*self.maze_size[1])
             done = False
+            for reward_tile in self.maze_view.maze.reward_tiles:
+                if np.array_equal(self.maze_view.robot, reward_tile.location):
+                    reward = reward_tile.value
+                    done = False
+                    # Remove this tile from the map
+                    print(self.maze_view.maze.reward_tiles)
+                    self.maze_view.maze.reward_tiles = tuple(t for t in self.maze_view.maze.reward_tiles if not np.array_equal(t, reward_tile))
+                    print(self.maze_view.maze.reward_tiles)
+                    # i = input("Press enter")
+                    break
 
         self.state = self.maze_view.robot
 
@@ -169,3 +185,20 @@ class MazeEnvRandom20x20Plus(MazeEnv):
 class MazeEnvRandom30x30Plus(MazeEnv):
     def __init__(self, enable_render=True):
         super(MazeEnvRandom30x30Plus, self).__init__(maze_size=(30, 30), mode="plus", enable_render=enable_render)
+
+
+class MazeEnvRandom10x10Reward(MazeEnv):
+
+    def __init__(self, enable_render=True):
+        super(MazeEnvRandom10x10Reward, self).__init__(maze_size=(10, 10), mode="reward", enable_render=enable_render)
+
+
+class MazeEnvRandom20x20Reward(MazeEnv):
+
+    def __init__(self, enable_render=True):
+        super(MazeEnvRandom20x20Reward, self).__init__(maze_size=(20, 20), mode="reward", enable_render=enable_render)
+
+
+class MazeEnvRandom30x30Reward(MazeEnv):
+    def __init__(self, enable_render=True):
+        super(MazeEnvRandom30x30Reward, self).__init__(maze_size=(30, 30), mode="reward", enable_render=enable_render)

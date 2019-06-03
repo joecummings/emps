@@ -57,7 +57,7 @@ def simulate():
             state_0 = state
 
             # Print data
-            if DEBUG_MODE == 2:
+            if DEBUG_MODE > 1:
                 print("\nEpisode = %d" % episode)
                 print("t = %d" % t)
                 print("Action: %d" % action)
@@ -66,11 +66,12 @@ def simulate():
                 print("Best Q: %f" % best_q)
                 print("Explore rate: %f" % explore_rate)
                 print("Learning rate: %f" % learning_rate)
-                print("Streaks: %d" % num_streaks)
                 print("Discount rate:", discount_rate)
+                print("Streaks: %d" % num_streaks)
+                print("Total reward: %f" % total_reward)
                 print("")
 
-            elif DEBUG_MODE == 1:
+            if DEBUG_MODE > 0:
                 if done or t >= MAX_T - 1:
                     print("\nEpisode = %d" % episode)
                     print("t = %d" % t)
@@ -101,6 +102,9 @@ def simulate():
                 print("Episode %d timed out at %d with total reward = %f."
                       % (episode, t, total_reward))
 
+        if DEBUG_MODE > 2:
+            wait = input("Press enter to continue to next episode...")
+
         # It's considered done when it's solved over 120 times consecutively
         if num_streaks > STREAK_TO_END:
             break
@@ -117,13 +121,13 @@ def select_action(state, explore_rate):
 
 
 def get_explore_rate(t):
-    const_emo_dr = [0.0, 0.0, 0.0, 0.0, 0.0]
+    const_emo_er = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     return max(MIN_EXPLORE_RATE, min(0.8, 1.0 - math.log10((t+1)/DECAY_FACTOR)))
 
 
 def get_learning_rate(t):
-    const_emo_dr = [0.0, 0.0, 0.0, 0.0, 0.0]
+    const_emo_lr = [0.0, 0.0, 0.0, 0.0, 0.0]
 
     return max(MIN_LEARNING_RATE, min(0.8, 1.0 - math.log10((t+1)/DECAY_FACTOR)))
 
@@ -157,7 +161,7 @@ def state_to_bucket(state):
 if __name__ == "__main__":
 
     # Initialize the "maze" environment
-    env = gym.make("maze-random-10x10-v0")
+    env = gym.make("maze-random-10x10-reward-v0")
 
     '''
     Defining the environment related constants
@@ -185,7 +189,7 @@ if __name__ == "__main__":
     MAX_T = np.prod(MAZE_SIZE, dtype=int) * 100
     STREAK_TO_END = 100
     SOLVED_T = np.prod(MAZE_SIZE, dtype=int)
-    DEBUG_MODE = 2
+    DEBUG_MODE = 3  # [0...3]; less <---> more verbose
     RENDER_MAZE = True
     ENABLE_RECORDING = True
 

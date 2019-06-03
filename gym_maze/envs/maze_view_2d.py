@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 import numpy as np
 import os
 
@@ -8,7 +9,7 @@ class MazeView2D:
 
     def __init__(self, maze_name="Maze2D", maze_file_path=None,
                  maze_size=(30, 30), screen_size=(600, 600),
-                 has_loops=False, num_portals=0, enable_render=True):
+                 has_loops=False, num_portals=0, enable_render=True, num_reward_tiles=0):
 
         # PyGame configurations
         pygame.init()
@@ -19,7 +20,7 @@ class MazeView2D:
 
         # Load a maze
         if maze_file_path is None:
-            self.__maze = Maze(maze_size=maze_size, has_loops=has_loops, num_portals=num_portals)
+            self.__maze = Maze(maze_size=maze_size, has_loops=has_loops, num_portals=num_portals, num_reward_tiles=num_reward_tiles)
         else:
             if not os.path.exists(maze_file_path):
                 dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -59,6 +60,9 @@ class MazeView2D:
 
             # show the portals
             self.__draw_portals()
+
+            # show the portals
+            self.__draw_reward_tiles()
 
             # show the robot
             self.__draw_robot()
@@ -230,8 +234,10 @@ class MazeView2D:
 
         for reward_tile in self.maze.reward_tiles:
             # You can't make me misspell color
-            color = (255 * (-1 * reward_tile.value) if reward_tile.value < 0 else 0, 255 * reward_tile.value if reward_tile.value > 0 else 0, 0)
-            self.__colour_cell(reward_tile.location, colour=color, transparency=transparency)
+            # color = (255 * (-1 * reward_tile.value) if reward_tile.value < 0 else 0, 255 * reward_tile.value if reward_tile.value > 0 else 0, 0)
+            # self.__colour_cell(reward_tile.location, colour=color, transparency=transparency)
+            color = (255 if reward_tile.value < 0 else 0, 255 if reward_tile.value > 0 else 0, 0)
+            self.__colour_cell(reward_tile.location, colour=color, transparency=math.floor(abs(reward_tile.value) * 255))
 
     def __colour_cell(self, cell, colour, transparency):
 
@@ -297,7 +303,7 @@ class Maze:
         "W": (-1, 0)
     }
 
-    def __init__(self, maze_cells=None, maze_size=(10, 10), has_loops=True, num_portals=0, num_reward_tiles=10):
+    def __init__(self, maze_cells=None, maze_size=(10, 10), has_loops=True, num_portals=0, num_reward_tiles=0):
 
         # maze member variables
         self.maze_cells = maze_cells
@@ -464,7 +470,8 @@ class Maze:
             y = int(reward_tile_id / self.MAZE_H)
             reward_tile_location = (x, y)
             # Create the new tile with a random reward value, and append to the maze
-            reward_tile = RewardTile(reward_tile_location, random.uniform(-1.0, 1.0))
+            # reward_tile = RewardTile(reward_tile_location, random.uniform(-0.5, 0.5))
+            reward_tile = RewardTile(reward_tile_location, 0)
             self.__reward_tiles.append(reward_tile)
 
     def is_open(self, cell_id, dir):
@@ -506,6 +513,10 @@ class Maze:
     @property
     def reward_tiles(self):
         return tuple(self.__reward_tiles)
+
+    @reward_tiles.setter
+    def reward_tiles(self, t):
+        self.__reward_tiles = t
 
     @property
     def MAZE_W(self):
