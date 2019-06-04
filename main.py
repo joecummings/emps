@@ -5,6 +5,7 @@ import random
 
 import gym
 import gym_maze
+from gym_maze.envs.maze_view_2d import Maze, MazeView2D
 
 
 curr_state = np.asarray([0.5, 0.5, 0.5, 0.5, 0.5])  # [happy, sad, bored, frustrated, curious]
@@ -161,7 +162,7 @@ def state_to_bucket(state):
 if __name__ == "__main__":
 
     # Initialize the "maze" environment
-    env = gym.make("maze-random-10x10-reward-v0")
+    env = gym.make("maze-5x5-reward-v0")
 
     '''
     Defining the environment related constants

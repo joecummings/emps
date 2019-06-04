@@ -51,7 +51,7 @@ class MazeEnv(gym.Env):
 
         # observation is the x, y coordinate of the grid
         low = np.zeros(len(self.maze_size), dtype=int)
-        high =  np.array(self.maze_size, dtype=int) - np.ones(len(self.maze_size), dtype=int)
+        high = np.array(self.maze_size, dtype=int) - np.ones(len(self.maze_size), dtype=int)
         self.observation_space = spaces.Box(low, high, dtype=np.int64)
 
         # initial condition
@@ -202,3 +202,8 @@ class MazeEnvRandom20x20Reward(MazeEnv):
 class MazeEnvRandom30x30Reward(MazeEnv):
     def __init__(self, enable_render=True):
         super(MazeEnvRandom30x30Reward, self).__init__(maze_size=(30, 30), mode="reward", enable_render=enable_render)
+
+
+class MazeEnv5x5Reward(MazeEnv):
+    def __init__(self, enable_render=True):
+        super(MazeEnv5x5Reward, self).__init__(maze_file="maze2d_001.npy", mode="reward", enable_render=enable_render)

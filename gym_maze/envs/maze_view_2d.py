@@ -470,8 +470,8 @@ class Maze:
             y = int(reward_tile_id / self.MAZE_H)
             reward_tile_location = (x, y)
             # Create the new tile with a random reward value, and append to the maze
-            # reward_tile = RewardTile(reward_tile_location, random.uniform(-0.5, 0.5))
-            reward_tile = RewardTile(reward_tile_location, 0)
+            reward_tile = RewardTile(reward_tile_location, random.uniform(-0.5, 0.5))
+            # reward_tile = RewardTile(reward_tile_location, 0)
             self.__reward_tiles.append(reward_tile)
 
     def is_open(self, cell_id, dir):
@@ -625,7 +625,6 @@ class RewardTile:
 
 
 if __name__ == "__main__":
-
     maze = MazeView2D(screen_size=(500, 500), maze_size=(10, 10))
     maze.update()
     input("Enter any key to quit.")
