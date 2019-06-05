@@ -29,7 +29,10 @@ class MazeView2D:
                     maze_file_path = rel_path
                 else:
                     raise FileExistsError("Cannot find %s." % maze_file_path)
-            self.__maze = Maze(maze_cells=Maze.load_maze(maze_file_path))
+            loaded_maze = Maze.load_maze(maze_file_path)
+            self.__maze = Maze(maze_cells=loaded_maze[0])
+            self.__maze.reward_tiles = loaded_maze[1]
+            self.__maze.num_reward_tiles = len(loaded_maze[1])
 
         self.maze_size = self.__maze.maze_size
         if self.__enable_render is True:
@@ -339,6 +342,9 @@ class Maze:
 
         else:
             np.save(file_path, self.maze_cells, allow_pickle=False, fix_imports=True)
+            with open(file_path[:-4] + "r.npy", 'w') as file:
+                for reward_tile in self.reward_tiles:
+                    file.write(str(reward_tile.location[0]) + "\t" + str(reward_tile.location[1]) + "\t" + str(reward_tile.value) + "\n")
 
     @classmethod
     def load_maze(cls, file_path):
@@ -350,7 +356,12 @@ class Maze:
             raise ValueError("Cannot find %s." % file_path)
 
         else:
-            return np.load(file_path, allow_pickle=False, fix_imports=True)
+            r_tiles = []
+            with open(file_path[:-4] + "r.npy", 'r') as file:
+                for line in file:
+                    r_tile = line.split("\t")
+                    r_tiles.append(RewardTile((int(r_tile[0]), int(r_tile[1])), random.uniform(float(r_tile[2]), float(r_tile[2]))))
+            return (np.load(file_path, allow_pickle=False, fix_imports=True), r_tiles)
 
     def _generate_maze(self):
 

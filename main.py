@@ -162,6 +162,7 @@ def state_to_bucket(state):
 if __name__ == "__main__":
 
     # Initialize the "maze" environment
+    # env = gym.make("maze-random-10x10-reward-v0")
     env = gym.make("maze-5x5-reward-v0")
 
     '''
