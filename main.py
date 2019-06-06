@@ -6,6 +6,7 @@ import random
 import gym
 import gym_maze
 from gym_maze.envs.maze_view_2d import Maze, MazeView2D
+from gym_maze.envs.maze_env import max_maze_file_digit
 
 
 curr_state = np.asarray([0.5, 0.5, 0.5, 0.5, 0.5])  # [happy, sad, bored, frustrated, curious]
@@ -87,7 +88,8 @@ def simulate():
                 env.render()
 
             if env.is_game_over():
-                sys.exit()
+                return
+                # sys.exit()
 
             if done:
                 print("Episode %d finished after %f time steps with total reward = %f (streak %d)."
@@ -107,7 +109,7 @@ def simulate():
             wait = input("Press enter to continue to next episode...")
 
         # It's considered done when it's solved over 120 times consecutively
-        if num_streaks > STREAK_TO_END:
+        if num_streaks > STREAK_TO_END or True:
             break
 
 
@@ -159,56 +161,63 @@ def state_to_bucket(state):
     return tuple(bucket_indice)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
+    """Run the test
+    """
 
-    # Initialize the "maze" environment
-    # env = gym.make("maze-random-10x10-reward-v0")
-    env = gym.make("maze-5x5-reward-v0")
+    max_maze = int(input("Max number of mazes to test: "))
+    gym_maze.envs.maze_env.max_maze_file_digit = max_maze
+    curr_maze = 0
+    while curr_maze < max_maze:
+        curr_maze = curr_maze + 1
 
-    '''
-    Defining the environment related constants
-    '''
-    # Number of discrete states (bucket) per state dimension
-    MAZE_SIZE = tuple((env.observation_space.high + np.ones(env.observation_space.shape)).astype(int))
-    NUM_BUCKETS = MAZE_SIZE  # one bucket per grid
+        # Initialize the "maze" environment
+        env = gym.make("maze-5x5-reward-v0")
 
-    # Number of discrete actions
-    NUM_ACTIONS = env.action_space.n  # ["N", "S", "E", "W"]
-    # Bounds for each discrete state
-    STATE_BOUNDS = list(zip(env.observation_space.low, env.observation_space.high))
+        '''
+        Defining the environment related constants
+        '''
+        # Number of discrete states (bucket) per state dimension
+        MAZE_SIZE = tuple((env.observation_space.high + np.ones(env.observation_space.shape)).astype(int))
+        NUM_BUCKETS = MAZE_SIZE  # one bucket per grid
 
-    '''
-    Learning related constants
-    '''
-    MIN_EXPLORE_RATE = 0.001
-    MIN_LEARNING_RATE = 0.2
-    DECAY_FACTOR = np.prod(MAZE_SIZE, dtype=float) / 10.0
+        # Number of discrete actions
+        NUM_ACTIONS = env.action_space.n  # ["N", "S", "E", "W"]
+        # Bounds for each discrete state
+        STATE_BOUNDS = list(zip(env.observation_space.low, env.observation_space.high))
 
-    '''
-    Defining the simulation related constants
-    '''
-    NUM_EPISODES = 50000
-    MAX_T = np.prod(MAZE_SIZE, dtype=int) * 100
-    STREAK_TO_END = 100
-    SOLVED_T = np.prod(MAZE_SIZE, dtype=int)
-    DEBUG_MODE = 3  # [0...3]; less <---> more verbose
-    RENDER_MAZE = True
-    ENABLE_RECORDING = True
+        '''
+        Learning related constants
+        '''
+        MIN_EXPLORE_RATE = 0.001
+        MIN_LEARNING_RATE = 0.2
+        DECAY_FACTOR = np.prod(MAZE_SIZE, dtype=float) / 10.0
 
-    '''
-    Creating a Q-Table for each state-action pair
-    '''
-    q_table = np.zeros(NUM_BUCKETS + (NUM_ACTIONS,), dtype=float)
+        '''
+        Defining the simulation related constants
+        '''
+        NUM_EPISODES = 50000
+        MAX_T = np.prod(MAZE_SIZE, dtype=int) * 100
+        STREAK_TO_END = 100
+        SOLVED_T = np.prod(MAZE_SIZE, dtype=int)
+        DEBUG_MODE = 2  # [0...3]; less <---> more verbose
+        RENDER_MAZE = True
+        ENABLE_RECORDING = True
 
-    '''
-    Begin simulation
-    '''
-    recording_folder = "/tmp/maze_q_learning"
+        '''
+        Creating a Q-Table for each state-action pair
+        '''
+        q_table = np.zeros(NUM_BUCKETS + (NUM_ACTIONS,), dtype=float)
 
-    # if ENABLE_RECORDING:
-    #    env.monitor.start(recording_folder, force=True)
+        '''
+        Begin simulation
+        '''
+        recording_folder = "/tmp/maze_q_learning"
 
-    simulate()
+        # if ENABLE_RECORDING:
+        #    env.monitor.start(recording_folder, force=True)
 
-    # if ENABLE_RECORDING:
-    #    env.monitor.close()
+        simulate()
+
+        # if ENABLE_RECORDING:
+        #    env.monitor.close()

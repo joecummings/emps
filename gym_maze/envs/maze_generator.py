@@ -1,7 +1,10 @@
 import os
 from maze_view_2d import Maze
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
+    """Generate mazes
+    """
 
     # check if the folder "maze_samples" exists in the current working directory
     dir_name = os.path.join(os.getcwd(), "maze_samples")

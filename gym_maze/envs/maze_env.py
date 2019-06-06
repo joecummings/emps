@@ -6,6 +6,15 @@ from gym.utils import seeding
 from gym_maze.envs.maze_view_2d import MazeView2D
 
 
+global maze_file_digit
+global max_maze_file_digit
+global del_toggle
+
+maze_file_digit = 0
+max_maze_file_digit = 0
+del_toggle = False
+
+
 class MazeEnv(gym.Env):
     metadata = {
         "render.modes": ["human", "rgb_array"],
@@ -66,7 +75,11 @@ class MazeEnv(gym.Env):
         self.configure()
 
     def __del__(self):
-        if self.enable_render is True:
+        # Dirty hack to aviod off-by-one errors and keep safe memory practices
+        if maze_file_digit == max_maze_file_digit:
+            global del_toggle
+            del_toggle = True
+        elif self.enable_render is True and del_toggle:
             self.maze_view.quit_game()
 
     def configure(self, display=None):
@@ -206,4 +219,12 @@ class MazeEnvRandom30x30Reward(MazeEnv):
 
 class MazeEnv5x5Reward(MazeEnv):
     def __init__(self, enable_render=True):
-        super(MazeEnv5x5Reward, self).__init__(maze_file="maze2d_001.npy", mode="reward", enable_render=enable_render)
+        global maze_file_digit
+        # maze_file_digit = input("Enter the 3-digit code of the maze to load: ")
+        # try:
+        #     int(maze_file_digit)
+        # except:
+        #     maze_file_digit = "001"
+        maze_file_digit = maze_file_digit + 1
+        d = "{:03d}".format(maze_file_digit)
+        super(MazeEnv5x5Reward, self).__init__(maze_file="maze2d_" + d + ".npy", mode="reward", enable_render=enable_render)
