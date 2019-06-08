@@ -80,3 +80,31 @@ register(
     timestep_limit=1000000,
     nondeterministic=True,
 )
+
+register(
+    id='maze-random-10x10-reward-v0',
+    entry_point='gym_maze.envs:MazeEnvRandom10x10Reward',
+    timestep_limit=1000000,
+    nondeterministic=True,
+)
+
+register(
+    id='maze-random-20x20-reward-v0',
+    entry_point='gym_maze.envs:MazeEnvRandom20x20Reward',
+    timestep_limit=1000000,
+    nondeterministic=True,
+)
+
+register(
+    id='maze-random-30x30-reward-v0',
+    entry_point='gym_maze.envs:MazeEnvRandom30x30Reward',
+    timestep_limit=1000000,
+    nondeterministic=True,
+)
+
+register(
+    id='maze-5x5-reward-v0',
+    entry_point='gym_maze.envs:MazeEnv5x5Reward',
+    timestep_limit=1000000,
+    nondeterministic=True,
+)
