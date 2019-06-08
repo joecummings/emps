@@ -7,8 +7,9 @@ import gym
 import gym_maze
 
 
-curr_state = np.asarray([0.5, 0.5, 0.5, 0.5, 0.5])  #[happy, sad, bored, frustrated, curious]
-mood = []
+curr_state = np.asarray([0.5, 0.5, 0.5, 0.5])  #[happy, sad, bored, frustrated]
+mood = np.asarray([0.5, 0.5, 0.5, 0.5])
+curr_emotion = curr_state.index(max(curr_state))
 
 def simulate():
 
@@ -22,7 +23,7 @@ def simulate():
     # Render tha maze
     env.render()
 
-    prev_rewards = prev_rewards[:25]
+    prev_rewards = []
 
     for episode in range(NUM_EPISODES):
 
@@ -52,7 +53,8 @@ def simulate():
             prev_rewards.insert(0, reward)
 
             # update emotion state
-            update_emotion_state(t, state, prev_rewards, total_reward)
+            if curr_state.index(max(curr_state)) != curr_emotion:
+                update_emotion_state(t, prev_rewards)
 
             # Update the Q based on the result
             best_q = np.amax(q_table[state])
@@ -121,35 +123,45 @@ def select_action(state, explore_rate):
         action = int(np.argmax(q_table[state]))
     return action
 
-def update_emotion_state(t, state, prev_rewards, total_reward):
-    if prev_rewards:
-        if t > 25:
-            curr_state[2] = min(curr_state[2] += 0.1, 1.0) # boredom
-        curr_state[4] = min(curr_state[4] += 0.1, 1.0) # curiousity
+def update_emotion_state(t, prev_reward):
+    delta = 0.0
+    
+    try:
+        delta = abs(prev_reward[0]/prev_reward[1])
+        
+        if prev_reward[1] > prev_reward[0]:
+            delta = delta * -1.0
+        
+    except:
+       delta = 0.0
 
-    if total_reward < -0.1:
-        if t > 25:
-            curr_state[3] = min(curr_state[3] += 0.1, 1.0) # frustration
+    if delta > 2.0:
+        curr_state[0] = min(curr_state[0] + 0.1, 1.0) #happiness goes up
+        curr_state[1] = max(curr_state[1] - 0.1, 0.0) #sadness goes down
+        curr_state[2] = max(curr_state[2] - 0.1, 0.0) #boredom goes down
+        curr_state[3] = max(curr_state[3] - 0.1, 0.0) #frustration goes down
+    
+    elif delta < 2.0:
+        curr_state[0] =  max(curr_state[0] - 0.1, 0.0) #happiness goes down
+        curr_state[1] = min(curr_state[1] + 0.1, 1.0) #sadness goes up
+        curr_state[2] = max(curr_state[2] - 0.1, 0.0) #boredom goes down
+    
+    else:
+
+    
+
 
 
 def get_explore_rate(er):
-    const_emo_er = [-0.20, -0.10, 0.10, 0.10, 0.20]
+    const_emo_er = [-0.20, -0.10, 0.10, 0.10]
 
     return max(MIN_EXPLORE_RATE, min(0.8, 1.0 - np.dot(const_emo_er, curr_state)))
 
 
 def get_learning_rate(t):
-    const_emo_lr = [0.0, 0.0, 0.0, 0.0, 0.0]
+    const_emo_lr = [0.2, -0.1, -0.1, 0.1]
 
     return max(MIN_EXPLORE_RATE, min(0.8, 1.0 - np.dot(const_emo_lr, curr_state)))
-
-def get_discount_rate(t):
-    const_emo_dr = np.asarray([0.0, 0.0, 0.15, 0.15, -0.3])
-
-    if t == 0:
-        return 0.99
-    else:
-        return np.dot(const_emo_dr, curr_state)
 
 
 def state_to_bucket(state):
